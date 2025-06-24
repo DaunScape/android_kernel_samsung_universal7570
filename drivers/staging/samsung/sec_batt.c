@@ -20,8 +20,11 @@ EXPORT_SYMBOL(lpcharge);
 
 static int sec_bat_is_lpm_check(char *str)
 {
+/* HACK: Force disable low power charge */
+#if 0
 	if (strncmp(str, "charger", 7) == 0)
 		lpcharge = 1;
+#endif
 
 	pr_info("%s: Low power charging mode: %d\n", __func__, lpcharge);
 
