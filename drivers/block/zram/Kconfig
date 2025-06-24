@@ -25,6 +25,16 @@ config ZRAM_LZ4_COMPRESS
 	  This option enables LZ4 compression algorithm support. Compression
 	  algorithm can be changed using `comp_algorithm' device attribute.
 
+config ZRAM_ZSTD_COMPRESS
+	bool "Enable ZSTD algorithm support"
+	depends on ZRAM
+	select ZSTD_COMPRESS
+	select ZSTD_DECOMPRESS
+	default y
+	help
+	  This option enables ZSTD compression algorithm support. Compression
+	  algorithm can be changed using `comp_algorithm' device attribute.
+
 config ZRAM_DEBUG
 	bool "Compressed RAM block device debug support"
 	depends on ZRAM
