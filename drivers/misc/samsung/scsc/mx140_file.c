@@ -488,6 +488,8 @@ int mx140_basedir_file(struct scsc_mx *mx)
 	/* Set to kernel segment. */
 	set_fs(get_ds());
 
+/* HACK: Skip mount point check (postmarketOS) */
+#if 0
 	/* If /system isn't present, assume platform isn't ready yet */
 	r = vfs_stat("/system", &stat);
 	if (r != 0) {
@@ -507,6 +509,7 @@ int mx140_basedir_file(struct scsc_mx *mx)
 		r = -EAGAIN;
 		goto done;
 	}
+#endif
 
 	/* Search for SCSC FW under the mountpoints */
 
