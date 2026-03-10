@@ -3520,14 +3520,6 @@ static int decon_probe(struct platform_device *pdev)
 		goto fail_iovmm;
 
 
-	/* register framebuffer */
-	fbinfo = decon->windows[decon->pdata->default_win]->fbinfo;
-	ret = register_framebuffer(fbinfo);
-	if (ret < 0) {
-		decon_err("failed to register framebuffer\n");
-		goto fail_iovmm;
-	}
-
 	/* mutex mechanism */
 	mutex_init(&decon->output_lock);
 	mutex_init(&decon->mutex);
@@ -3678,6 +3670,14 @@ decon_init_done:
 		decon_err("Failed to call DSIM packet go enable\n");
 #endif
 	decon->state = DECON_STATE_INIT;
+
+	/* register framebuffer */
+	fbinfo = decon->windows[decon->pdata->default_win]->fbinfo;
+	ret = register_framebuffer(fbinfo);
+	if (ret < 0) {
+		decon_err("failed to register framebuffer\n");
+		goto fail_iovmm;
+	}
 
 	/* [W/A] prevent sleep enter during LCD on */
 	ret = device_init_wakeup(decon->dev, true);
