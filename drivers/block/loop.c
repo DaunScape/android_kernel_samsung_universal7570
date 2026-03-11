@@ -687,6 +687,11 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
 	if (!file)
 		goto out;
 
+	/* POSTMARKETOS:
+	 * Disable Direct I/O to prevent kernel panics during e2fsck
+	 */
+	file->f_flags &= ~O_DIRECT;
+
 	error = loop_validate_file(file, bdev);
 	if (error)
 		goto out_putf;
@@ -863,6 +868,11 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
 	file = fget(arg);
 	if (!file)
 		goto out;
+
+	/* POSTMARKETOS:
+	 * Disable Direct I/O to prevent kernel panics during e2fsck
+	 */
+	file->f_flags &= ~O_DIRECT;
 
 	error = -EBUSY;
 	if (lo->lo_state != Lo_unbound)
