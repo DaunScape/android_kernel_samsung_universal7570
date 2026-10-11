@@ -53,6 +53,15 @@
 #include <linux/muic/muic_afc.h>
 #endif
 
+/*
+ * [HACK] Set to 1 to force JIG_UART_OFF (523K) detection on every MUIC
+ * scan, keeping the AP UART path switched in without an actual JIG
+ * resistor on the ID pin. Lets postmarketOS serial console/log show up
+ * on the USB connector's D+/D- lines without factory test hardware.
+ * Disables normal USB/charger/OTG detection while enabled - debug only.
+ */
+#define HACK_FORCE_JIG_UART_OFF		0
+
 extern int muic_wakeup_noti;
 
 void muic_set_wakeup_noti(int flag)
@@ -371,6 +380,11 @@ void muic_detect_dev(muic_data_t *pmuic)
 
 
 	vps_resolve_dev(pmuic, &new_dev, &intr);
+
+#if HACK_FORCE_JIG_UART_OFF
+	new_dev = ATTACHED_DEV_JIG_UART_OFF_MUIC;
+	intr = MUIC_INTR_ATTACH;
+#endif
 
 	if (intr == MUIC_INTR_ATTACH) {
 		muic_handle_attach(pmuic, new_dev,
