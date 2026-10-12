@@ -1559,7 +1559,7 @@ static bool dw_mci_wait_data_busy(struct dw_mci *host, struct mmc_request *mrq)
 out:
 	if (host->cur_slot) {
 		if (ret == false)
-			dev_err(host->dev, "Data[0]: data is busy\n");
+			dev_dbg(host->dev, "Data[0]: data is busy\n");
 
 		/* enable clock */
 		mci_writel(host, CLKENA, ((SDMMC_CLKEN_ENABLE |
@@ -3110,7 +3110,7 @@ static void dw_mci_timeout_timer(unsigned long data)
 
 		if (!(mrq->cmd->opcode == MMC_SEND_TUNING_BLOCK ||
 				mrq->cmd->opcode == MMC_SEND_TUNING_BLOCK_HS200)) {
-			dev_err(host->dev,
+			dev_dbg(host->dev,
 					"Timeout waiting for hardware interrupt."
 					" state = %d\n", host->state);
 			dw_mci_reg_dump(host);
