@@ -136,7 +136,7 @@ static void s2mpu06_test_read(struct i2c_client *i2c)
 		sprintf(str+strlen(str), "0x%02x:0x%02x, ", i, data);
 	}
 
-	pr_err("%s: %s\n", __func__, str);
+	pr_debug("%s: %s\n", __func__, str);
 }
 
 static void s2mpu06_chg_check(struct s2mpu06_charger_data *charger)
@@ -145,12 +145,12 @@ static void s2mpu06_chg_check(struct s2mpu06_charger_data *charger)
 	unsigned int soc;
 	u8 temp;
 
-	pr_info("%s: start\n", __func__);
+	pr_debug("%s: start\n", __func__);
 	val.intval = SEC_FUELGAUGE_CAPACITY_TYPE_RAW;
 	psy_do_property(charger->pdata->fuelgauge_name, get,
 		POWER_SUPPLY_PROP_CAPACITY, val);
 	soc = val.intval / 100;
-	pr_info("%s: soc %d\n", __func__, soc);
+	pr_debug("%s: soc %d\n", __func__, soc);
 	s2mpu06_read_reg(charger->s2mpu06->i2c, 0x18, &temp);
 
 	if (soc >= 80 && soc <= 100) {
@@ -161,10 +161,10 @@ static void s2mpu06_chg_check(struct s2mpu06_charger_data *charger)
 		msleep(10);
 		s2mpu06_write_reg(charger->client, 0x43, 0x34);
 		s2mpu06_update_reg(charger->client, S2MPU06_CHG_REG_CTRL12, 0x0C, 0x0C);
-		pr_info("%s: enable %d\n", __func__, soc);
+		pr_debug("%s: enable %d\n", __func__, soc);
 	}
 
-	pr_info("%s: end, soc=%d, monitor? = 0x%2x\n", __func__, soc, temp);
+	pr_debug("%s: end, soc=%d, monitor? = 0x%2x\n", __func__, soc, temp);
 
 }
 
@@ -567,7 +567,7 @@ static int s2mpu06_get_charging_health(struct s2mpu06_charger_data *charger)
 		return POWER_SUPPLY_HEALTH_UNKNOWN;
 	}
 
-	pr_info("%s: read charger status 1 (0x%x)\n", __func__, ret);
+	pr_debug("%s: read charger status 1 (0x%x)\n", __func__, ret);
 	if (ret & (1 << CHG_STATUS1_CHGVIN_STS)) {
 		charger->ovp = false;
 		return POWER_SUPPLY_HEALTH_GOOD;

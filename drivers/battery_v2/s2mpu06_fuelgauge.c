@@ -10,8 +10,6 @@
  * published by the Free Software Foundation.
  */
 
-#define DEBUG
-
 #define SINGLE_BYTE	1
 
 #include "include/fuelgauge/s2mpu06_fuelgauge.h"
@@ -281,7 +279,7 @@ static int s2mpu06_get_soc(struct s2mpu06_fuelgauge_data *fuelgauge)
 		rsoc = ((rsoc * 10000) / (0x1 << 12));
 	}
 
-	dev_info(&fuelgauge->i2c->dev, "[DEBUG]%s: raw capacity (0x%x:%d)\n",
+	dev_dbg(&fuelgauge->i2c->dev, "[DEBUG]%s: raw capacity (0x%x:%d)\n",
 		 __func__, compliment, rsoc);
 
 	return (min(rsoc, 10000) / 10);
@@ -399,7 +397,7 @@ static int s2mpu06_get_avgvbat(struct s2mpu06_fuelgauge_data *fuelgauge)
 			old_vbat = new_vbat / 2 + old_vbat / 2;
 	}
 
-	dev_info(&fuelgauge->i2c->dev, "%s: avgvbat (%d)\n",
+	dev_dbg(&fuelgauge->i2c->dev, "%s: avgvbat (%d)\n",
 						__func__, old_vbat);
 
 	return old_vbat;
@@ -414,7 +412,7 @@ static void s2mpu06_fg_get_scaled_capacity(
 		0 : ((val->intval - fuelgauge->pdata->capacity_min) * 1000 /
 		(fuelgauge->capacity_max - fuelgauge->pdata->capacity_min));
 
-	dev_info(&fuelgauge->i2c->dev,
+	dev_dbg(&fuelgauge->i2c->dev,
 			"%s: scaled capacity (%d.%d)\n",
 			__func__, val->intval/10, val->intval%10);
 }

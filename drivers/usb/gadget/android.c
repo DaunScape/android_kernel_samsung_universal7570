@@ -139,6 +139,21 @@ static struct class *android_class;
 static struct android_dev *_android_dev;
 static int android_bind_config(struct usb_configuration *c);
 static void android_unbind_config(struct usb_configuration *c);
+static ssize_t functions_store(struct device *pdev, struct device_attribute *attr,
+				const char *buff, size_t size);
+static ssize_t enable_store(struct device *pdev, struct device_attribute *attr,
+			     const char *buff, size_t size);
+
+/*
+ * [HACK] Set to auto-enable the "acm" function and bring the gadget up at
+ * bind time, instead of waiting for userspace to write functions/enable
+ * under /sys/class/android_usb/android0/. postmarketOS has no Android init
+ * to do that, so without this the gadget never connects over a plain USB
+ * cable. Gives a /dev/ttyGS0 <-> host /dev/ttyACM* link - run a getty on
+ * ttyGS0 for a login shell. Debug only; replaces whatever userspace would
+ * normally configure (MTP/RNDIS/etc. won't be set up).
+ */
+// #define HACK_FORCE_ANDROID_ACM
 
 /* string IDs are assigned dynamically */
 #define STRING_MANUFACTURER_IDX		0
@@ -2095,6 +2110,11 @@ static int android_bind(struct usb_composite_dev *cdev)
 #endif
 	usb_gadget_set_selfpowered(gadget);
 	dev->cdev = cdev;
+
+#ifdef HACK_FORCE_ANDROID_ACM
+	functions_store(dev->dev, NULL, "acm", 3);
+	enable_store(dev->dev, NULL, "1", 1);
+#endif
 
 	return 0;
 }
