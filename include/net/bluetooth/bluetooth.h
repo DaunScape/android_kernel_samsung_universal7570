@@ -295,6 +295,13 @@ struct bt_skb_cb {
 };
 #define bt_cb(skb) ((struct bt_skb_cb *)((skb)->cb))
 
+/* Added for drivers/bluetooth/h4_recv.h (vendored from a newer kernel
+ * than this struct bt_skb_cb - see scsc_bluez.c). Later kernels renamed
+ * this struct to hci_skb_cb and these fields got dedicated accessors,
+ * but the fields and their layout here are the same ones. */
+#define hci_skb_pkt_type(skb) bt_cb(skb)->pkt_type
+#define hci_skb_expect(skb) bt_cb(skb)->expect
+
 static inline struct sk_buff *bt_skb_alloc(unsigned int len, gfp_t how)
 {
 	struct sk_buff *skb;
