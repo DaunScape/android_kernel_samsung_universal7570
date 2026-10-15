@@ -326,6 +326,17 @@ config N_HDLC
 	  The module will be called n_hdlc. If you want to do that, say M
 	  here.
 
+config TTY_GSM_VIRTUAL
+	bool "Virtual modem tty ports for a userspace modem daemon"
+	help
+	  Registers /dev/ttyGSM0 and /dev/ttyGSM1 as real tty devices, each
+	  with a matching master node (/dev/ttygsm-master0 and 1) that a
+	  userspace daemon such as samsungipcd reads and writes, much like
+	  the two ends of a pty. Unlike a pty the tty side shows up in
+	  /sys/class/tty, so udev and ModemManager can see it.
+
+	  If unsure, say N.
+
 config N_GSM
 	tristate "GSM MUX line discipline support (EXPERIMENTAL)"
 	depends on NET
