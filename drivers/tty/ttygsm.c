@@ -19,6 +19,7 @@
 #include <linux/miscdevice.h>
 #include <linux/poll.h>
 #include <linux/sched.h>
+#include <linux/serial.h>
 #include <linux/spinlock.h>
 #include <linux/tty.h>
 #include <linux/tty_driver.h>
@@ -103,14 +104,13 @@ static int ttygsm_write_room(struct tty_struct *tty)
 
 static int ttygsm_chars_in_buffer(struct tty_struct *tty)
 {
-	struct ttygsm *gsm = tty_to_gsm(tty);
-	unsigned long flags;
-	int len;
-
-	spin_lock_irqsave(&gsm->lock, flags);
-	len = kfifo_len(&gsm->to_master);
-	spin_unlock_irqrestore(&gsm->lock, flags);
-	return len;
+	/*
+	 * There is no transmitter to wait for: data counts as sent once it is
+	 * queued for the daemon. Reporting the queue here would make tcdrain()
+	 * and the final close() block for as long as the daemon is not
+	 * reading, which hangs clients such as ModemManager and pppd.
+	 */
+	return 0;
 }
 
 static void ttygsm_flush_buffer(struct tty_struct *tty)
@@ -336,6 +336,8 @@ static int __init ttygsm_init(void)
 			goto err_ports;
 		tty_port_init(&gsm->port);
 		gsm->port.ops = &ttygsm_port_ops;
+		gsm->port.close_delay = 0;
+		gsm->port.closing_wait = ASYNC_CLOSING_WAIT_NONE;
 
 		snprintf(gsm->master_name, sizeof(gsm->master_name),
 			 "ttygsm-master%d", i);
