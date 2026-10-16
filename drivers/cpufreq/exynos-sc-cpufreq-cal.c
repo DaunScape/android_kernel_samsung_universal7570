@@ -117,8 +117,13 @@ static int exynos_sc_cpufreq_init_cal_table(void)
                         ptr_temp_table[cal_max_support_idx].rate,
                         ptr_temp_table[ptr->max_support_idx].rate);
 
+        /*
+         * Overclock: don't clamp the DT max_support_idx to the ECT/CAL max.
+         * (stock: if (max_support_idx < cal_max_support_idx) use cal's)
+         */
         if (ptr->max_support_idx < cal_max_support_idx)
-                ptr->max_support_idx = cal_max_support_idx;
+                pr_warn("CPUFREQ of CL0 DT max idx %d is above CAL max idx %d, keeping DT\n",
+                        ptr->max_support_idx, cal_max_support_idx);
 
         pr_info("CPUFREQ of CL0 Current max freq %lu KHz\n",
                                 ptr_temp_table[ptr->max_support_idx].rate);
