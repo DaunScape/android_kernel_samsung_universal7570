@@ -10,6 +10,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/firmware.h>
 #include "fimc-is-sec-define.h"
 #include "fimc-is-vender-specific.h"
 
@@ -4868,14 +4869,8 @@ p_err:
 int fimc_is_sec_fw_sel_eeprom(struct device *dev, int id, bool headerOnly)
 {
 	int ret = 0;
-	char fw_path[100];
 	char phone_fw_version[FIMC_IS_HEADER_VER_SIZE + 1] = {0, };
-
-	struct file *fp = NULL;
-	mm_segment_t old_fs;
-	long fsize, nread;
-	u8 *read_buf = NULL;
-	u8 *temp_buf = NULL;
+	const struct firmware *fw;
 	bool is_ldo_enabled[2];
 	struct fimc_is_core *core = (struct fimc_is_core *)dev_get_drvdata(fimc_is_dev);
 	struct fimc_is_vender_specific *specific = core->vender.private_data;
@@ -4954,63 +4949,27 @@ int fimc_is_sec_fw_sel_eeprom(struct device *dev, int id, bool headerOnly)
 		goto exit;
 	}
 
-	snprintf(fw_path, sizeof(fw_path), "%s%s", FIMC_IS_FW_PATH, sysfs_finfo.load_fw_name);
-
-	old_fs = get_fs();
-	set_fs(KERNEL_DS);
-
-	fp = filp_open(fw_path, O_RDONLY, 0);
-	if (IS_ERR(fp)) {
-		err("Camera: Failed open phone firmware");
+	/*
+	 * Only the version string at the end of the library is needed. Going through
+	 * request_firmware() honours the kernel's firmware search path (firmware_class.path,
+	 * /lib/firmware) instead of a hard-coded Android location.
+	 */
+	ret = request_firmware(&fw, sysfs_finfo.load_fw_name, dev);
+	if (ret) {
+		err("Camera: Failed to load phone firmware %s (%d)", sysfs_finfo.load_fw_name, ret);
 		ret = -EIO;
-		fp = NULL;
-		goto read_phone_fw_exit;
-	}
-
-	fsize = fp->f_path.dentry->d_inode->i_size;
-	info("start, file path %s, size %ld Bytes\n",
-		fw_path, fsize);
-
-#ifdef CAMERA_MODULE_DUALIZE
-	if (FIMC_IS_MAX_FW_BUFFER_SIZE >= fsize) {
-		memset(fw_buf, 0x0, FIMC_IS_MAX_FW_BUFFER_SIZE);
-		temp_buf = fw_buf;
-	} else
-#endif
-	{
-		info("Phone FW size is larger than FW buffer. Use vmalloc.\n");
-		read_buf = vmalloc(fsize);
-		if (!read_buf) {
-			err("failed to allocate memory");
-			ret = -ENOMEM;
-			goto read_phone_fw_exit;
-		}
-		temp_buf = read_buf;
-	}
-	nread = vfs_read(fp, (char __user *)temp_buf, fsize, &fp->f_pos);
-	if (nread != fsize) {
-		err("failed to read firmware file, %ld Bytes", nread);
+	} else if (fw->size < FIMC_IS_HEADER_VER_SIZE) {
+		err("Camera: phone firmware %s is too small (%zu Bytes)", sysfs_finfo.load_fw_name, fw->size);
+		release_firmware(fw);
 		ret = -EIO;
-		goto read_phone_fw_exit;
+	} else {
+		info("start, firmware %s, size %zu Bytes\n", sysfs_finfo.load_fw_name, fw->size);
+
+		strncpy(phone_fw_version, fw->data + fw->size - 11, FIMC_IS_HEADER_VER_SIZE);
+		strncpy(sysfs_pinfo.header_ver, fw->data + fw->size - 11, FIMC_IS_HEADER_VER_SIZE);
+		info("Camera: phone fw version: %s\n", phone_fw_version);
+		release_firmware(fw);
 	}
-
-	strncpy(phone_fw_version, temp_buf + nread - 11, FIMC_IS_HEADER_VER_SIZE);
-	strncpy(sysfs_pinfo.header_ver, temp_buf + nread - 11, FIMC_IS_HEADER_VER_SIZE);
-	info("Camera: phone fw version: %s\n", phone_fw_version);
-
-read_phone_fw_exit:
-	if (read_buf) {
-		vfree(read_buf);
-		read_buf = NULL;
-		temp_buf = NULL;
-	}
-
-	if (fp) {
-		filp_close(fp, current->files);
-		fp = NULL;
-	}
-
-	set_fs(old_fs);
 
 exit:
 #if defined(CONFIG_CAMERA_EEPROM_SUPPORT_FRONT) || defined(CONFIG_CAMERA_OTPROM_SUPPORT_FRONT)
