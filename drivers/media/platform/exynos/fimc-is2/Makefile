@@ -60,6 +60,7 @@ obj-$(CONFIG_VIDEO_EXYNOS_FIMC_IS2) += ischain/
 obj-$(CONFIG_VIDEO_EXYNOS_FIMC_IS2) += vendor/
 obj-$(CONFIG_VIDEO_EXYNOS_FIMC_IS2) += hardware/
 obj-$(CONFIG_VIDEO_EXYNOS_FIMC_IS2) += interface/
+obj-$(CONFIG_FIMC_IS_J4CAM) += j4cam.o
 obj-$(CONFIG_USE_DIRECT_IS_CONTROL) += hardware/
 obj-$(CONFIG_USE_DIRECT_IS_CONTROL) += interface/
 

@@ -7,6 +7,18 @@ config VIDEO_EXYNOS_FIMC_IS2
 	help
 	  This is a v4l2 driver for exynos FIMC-IS device.
 
+config FIMC_IS_J4CAM
+	tristate "J4 camera V4L2 front-end (standard /dev/videoN capture nodes)"
+	depends on VIDEO_EXYNOS_FIMC_IS2 && VIDEO_V4L2
+	select VIDEOBUF2_VMALLOC
+	default VIDEO_EXYNOS_FIMC_IS2
+	help
+	  Exposes the rear and front camera of the Galaxy J4 as two ordinary
+	  V4L2 capture devices (NV12, upright, one camera at a time) on top of the
+	  low-level FIMC-IS2 nodes, which are otherwise closed to userspace.
+	  Camera apps (Cheese, GStreamer, browsers) then work without any daemon,
+	  udev rule or vendor HAL. Say Y; M is only useful while developing.
+
 config CAMERA_USE_SOC_SENSOR
         bool "Use soc camera sensor"
         depends on VIDEO_EXYNOS_FIMC_IS2
