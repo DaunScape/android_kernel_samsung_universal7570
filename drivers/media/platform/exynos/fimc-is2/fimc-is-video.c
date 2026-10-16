@@ -944,6 +944,29 @@ p_err:
 	return ret;
 }
 
+static bool raw_nodes;
+module_param(raw_nodes, bool, 0644);
+MODULE_PARM_DESC(raw_nodes, "let any process open the raw FIMC-IS video nodes (default: only j4cam)");
+
+static struct task_struct *raw_opener;
+
+void fimc_is_set_raw_opener(struct task_struct *task)
+{
+	WRITE_ONCE(raw_opener, task);
+}
+EXPORT_SYMBOL_GPL(fimc_is_set_raw_opener);
+
+static int fimc_is_video_gated_open(struct file *file)
+{
+	struct fimc_is_video *video = video_drvdata(file);
+
+	/* refuse before taking any reference: a refused open must leave no trace */
+	if (!raw_nodes && READ_ONCE(raw_opener) != current)
+		return -EBUSY;
+
+	return video->real_open(file);
+}
+
 int fimc_is_video_probe(struct fimc_is_video *video,
 	char *video_name,
 	u32 video_number,
@@ -970,7 +993,10 @@ int fimc_is_video_probe(struct fimc_is_video *video,
 	video->vd.vfl_dir	= vfl_dir;
 #endif
 	video->vd.v4l2_dev	= v4l2_dev;
-	video->vd.fops		= fops;
+	video->fops		= *fops;
+	video->real_open	= fops->open;
+	video->fops.open	= fimc_is_video_gated_open;
+	video->vd.fops		= &video->fops;
 	video->vd.ioctl_ops	= ioctl_ops;
 	video->vd.minor		= -1;
 	video->vd.release	= video_device_release;

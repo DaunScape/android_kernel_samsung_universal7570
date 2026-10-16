@@ -283,6 +283,8 @@ struct fimc_is_video {
 	struct mutex			lock;
 
 	struct video_device		vd;
+	struct v4l2_file_operations	fops;		/* the node's fops, with open() gated */
+	int				(*real_open)(struct file *);
 	struct media_pad		pads;
 	struct fimc_is_resourcemgr	*resourcemgr;
 	const struct vb2_mem_ops	*vb2_mem_ops;
@@ -414,5 +416,14 @@ extern int fimc_is_ssxvc3_video_probe(void *data);
 #endif
 #define CALL_QOPS(q, op, args...)	(((q)->qops->op) ? ((q)->qops->op(args)) : 0)
 #define CALL_VOPS(v, op, args...)	(((v)->vops.op) ? ((v)->vops.op(v, args)) : 0)
+
+
+/*
+ * The raw FIMC-IS nodes are internal plumbing of the camera stack: opening them
+ * out of sequence (udev's v4l_id, format enumerators, device monitors...) can
+ * wedge or crash the driver. Only the task registered here (the j4cam V4L2
+ * front-end's worker) may open them, unless fimc_is.raw_nodes=1.
+ */
+void fimc_is_set_raw_opener(struct task_struct *task);
 
 #endif
