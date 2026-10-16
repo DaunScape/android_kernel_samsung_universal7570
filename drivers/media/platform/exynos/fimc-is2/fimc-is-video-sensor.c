@@ -246,7 +246,11 @@ static int fimc_is_ssx_video_enum_fmt_mplane(struct file *file, void *priv,
 				    struct v4l2_fmtdesc *f)
 {
 	/* Todo : add to enumerate format code */
-	return 0;
+	/*
+	 * No formats to enumerate. Succeeding here makes every index valid, so
+	 * userspace that lists formats until failure (GStreamer, Cheese) never ends.
+	 */
+	return -EINVAL;
 }
 
 static int fimc_is_ssx_video_get_format_mplane(struct file *file, void *fh,
@@ -431,6 +435,10 @@ static int fimc_is_ssx_video_enum_input(struct file *file, void *priv,
 {
 	/* Todo: add to enumerate input code */
 	info("%s is calld\n", __func__);
+	/* a single input: end enumeration after index 0 */
+	if (input->index)
+		return -EINVAL;
+
 	return 0;
 }
 

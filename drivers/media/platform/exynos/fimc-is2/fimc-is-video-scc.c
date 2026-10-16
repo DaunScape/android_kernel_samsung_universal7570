@@ -235,7 +235,11 @@ static int fimc_is_scc_video_enum_fmt_mplane(struct file *file, void *priv,
 	struct v4l2_fmtdesc *f)
 {
 	dbg("%s\n", __func__);
-	return 0;
+	/*
+	 * No formats to enumerate. Succeeding here makes every index valid, so
+	 * userspace that lists formats until failure (GStreamer, Cheese) never ends.
+	 */
+	return -EINVAL;
 }
 
 static int fimc_is_scc_video_get_format_mplane(struct file *file, void *fh,
@@ -411,6 +415,10 @@ static int fimc_is_scc_video_enum_input(struct file *file, void *priv,
 	struct v4l2_input *input)
 {
 	/* Todo : add to enum input control code */
+	/* a single input: end enumeration after index 0 */
+	if (input->index)
+		return -EINVAL;
+
 	return 0;
 }
 
