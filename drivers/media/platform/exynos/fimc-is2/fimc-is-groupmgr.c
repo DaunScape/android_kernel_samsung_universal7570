@@ -2049,7 +2049,11 @@ int fimc_is_group_stop(struct fimc_is_groupmgr *groupmgr,
 	BUG_ON(!groupmgr);
 	BUG_ON(!group);
 	BUG_ON(!group->device);
-	BUG_ON(!group->leader.vctx);
+	/* closing a node that never got set up must not take the machine down */
+	if (!group->leader.vctx) {
+		mgwarn("leader vctx is NULL, nothing to stop", group, group);
+		goto p_err;
+	}
 	BUG_ON(group->instance >= FIMC_IS_STREAM_COUNT);
 	BUG_ON(group->id >= GROUP_ID_MAX);
 
