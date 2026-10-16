@@ -1671,7 +1671,7 @@ int fimc_is_memory_attribute_rox(struct fimc_is_memory_attribute *attribute)
 }
 
 #ifdef USE_ONE_BINARY
-int fimc_is_load_bin(void)
+static int __fimc_is_load_bin(void)
 {
 	int ret = 0;
 	int i;
@@ -1814,7 +1814,7 @@ int fimc_is_load_bin(void)
 	return 0;
 }
 #else /* #ifdef USE_ONE_BINARY */
-int fimc_is_load_bin(void)
+static int __fimc_is_load_bin(void)
 {
 	int ret = 0;
 	struct fimc_is_binary bin;
@@ -1976,3 +1976,21 @@ int fimc_is_load_bin(void)
 	return 0;
 }
 #endif
+
+/*
+ * Several /dev/video* nodes can be opened at once (udev's v4l_id does that
+ * at boot), and each open reaches here before binary_load_flg is set. Without
+ * serialization one task flips the library pages to read-only while another
+ * is still memcpy()ing the binary into them (permission fault).
+ */
+int fimc_is_load_bin(void)
+{
+	static DEFINE_MUTEX(load_bin_lock);
+	int ret;
+
+	mutex_lock(&load_bin_lock);
+	ret = __fimc_is_load_bin();
+	mutex_unlock(&load_bin_lock);
+
+	return ret;
+}
