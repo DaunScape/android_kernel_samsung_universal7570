@@ -43,6 +43,35 @@
 		status = "okay";
 	};
 
+	firmware {
+		android {
+			compatible = "android,firmware";
+			fstab {
+				compatible = "android,fstab";
+				system {
+					compatible = "android,system";
+					dev = "/dev/block/platform/13540000.dwmmc0/by-name/SYSTEM";
+					type = "ext4";
+					mnt_flags = "ro";
+					fsmgr_flags = "wait";
+				};
+				vendor {
+					compatible = "android,vendor";
+					dev = "/dev/block/platform/13540000.dwmmc0/by-name/VENDOR";
+					type = "ext4";
+					mnt_flags = "ro";
+					fsmgr_flags = "wait";
+				};
+				/*
+				 * No odm: on J4 the ODM partition is Samsung's OMC/CSC
+				 * carrier partition (omc/, carrier priv-apps), not a
+				 * Treble odm. Mounting it on a non-Samsung system makes
+				 * system_server abort on unwhitelisted privapp permissions.
+				 */
+			};
+		};
+	};
+
 	dwmmc0@13540000 {
 		status = "okay";
 		num-slots = <1>;
