@@ -401,7 +401,16 @@ static int udc_bind_to_driver(struct usb_udc *udc, struct usb_gadget_driver *dri
 		driver->unbind(udc->gadget);
 		goto err1;
 	}
-	usb_gadget_connect(udc->gadget);
+	/*
+	 * android_usb disconnects in android_bind() and manages the pullup
+	 * itself (android_enable/android_disable), i.e. only once a config
+	 * with functions exists. Connecting here re-enables softconnect, so
+	 * the first VBUS session pulls D+ up with no configuration: hosts get
+	 * "no configurations", give up on the port, and adb only appears after
+	 * replugging the cable.
+	 */
+	if (!driver->function || strcmp(driver->function, "android_usb"))
+		usb_gadget_connect(udc->gadget);
 
 	kobject_uevent(&udc->dev.kobj, KOBJ_CHANGE);
 	return 0;
